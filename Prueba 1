@@ -1,0 +1,28 @@
+#include <iostream>
+using namespace std;
+
+struct Nodo {
+    int dato;
+    Nodo* izq;
+    Nodo* der;
+
+    Nodo(int valor) {
+        dato = valor;
+        izq = NULL;
+        der = NULL;
+    }
+};
+
+Nodo* insertar(Nodo* raiz, int valor) {
+    if (raiz == NULL)
+        return new Nodo(valor);
+
+    if (valor < raiz->dato)
+        raiz->izq = insertar(raiz->izq, valor);
+    else if (valor > raiz->dato)
+        raiz->der = insertar(raiz->der, valor);
+    else
+        cout << "El valor ya existe y no se permiten duplicados.\n";
+
+    return raiz;
+}
