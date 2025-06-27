@@ -1,0 +1,169 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Definición de la estructura Nodo para representar a un miembro de la civilización
+struct Nodo {
+    string id;            // Identificador único del miembro (clave)
+    string nombre;        // Nombre del individuo
+    string genero;        // Género: Masculino, Femenino u Otro
+    string fechaNac;      // Fecha de nacimiento (dato opcional)
+    Nodo* hijoMayor;      // Puntero al hijo mayor (lado izquierdo del árbol)
+    Nodo* hijoMenor;      // Puntero al hijo menor (lado derecho del árbol)
+
+    // Constructor del nodo, inicializa los datos y punteros a nullptr
+    Nodo(string _id, string _nombre, string _genero, string _fechaNac = "")
+        : id(_id), nombre(_nombre), genero(_genero), fechaNac(_fechaNac),
+          hijoMayor(NULL), hijoMenor(NULL) {}
+};
+
+// Función para insertar un nuevo miembro en el árbol genealógico
+Nodo* insertar(Nodo* raiz, string id, string nombre, string genero, string fechaNac = "") {
+    // Si el árbol está vacío, se crea un nuevo nodo como raíz
+    if (!raiz)
+        return new Nodo(id, nombre, genero, fechaNac);
+
+    // Si el ID es menor, se inserta en el subárbol izquierdo (hijo mayor)
+    if (id < raiz->id)
+        raiz->hijoMayor = insertar(raiz->hijoMayor, id, nombre, genero, fechaNac);
+
+    // Si el ID es mayor, se inserta en el subárbol derecho (hijo menor)
+    else if (id > raiz->id)
+        raiz->hijoMenor = insertar(raiz->hijoMenor, id, nombre, genero, fechaNac);
+
+    // Si el ID ya existe, no se inserta para evitar duplicados
+    else
+        cout << "ID duplicado. No se permite insertar.\n";
+
+    return raiz; // Se retorna la raíz actualizada
+}
+
+// Función para buscar un miembro por su ID
+Nodo* buscar(Nodo* raiz, string id) {
+    // Si el árbol está vacío o se encuentra el nodo, se retorna
+    if (!raiz || raiz->id == id)
+        return raiz;
+
+    // Si el ID es menor, se busca en el subárbol izquierdo
+    if (id < raiz->id)
+        return buscar(raiz->hijoMayor, id);
+    else // Si es mayor, en el subárbol derecho
+        return buscar(raiz->hijoMenor, id);
+}
+
+// Recorrido Inorden: muestra los miembros ordenados por ID alfabéticamente
+void inorden(Nodo* nodo) {
+    if (!nodo) return;
+    inorden(nodo->hijoMayor); // Visita hijo mayor (izquierdo)
+    cout << "ID: " << nodo->id << ", Nombre: " << nodo->nombre << ", Género: " << nodo->genero << ", Fecha Nac: " << nodo->fechaNac << endl;
+    inorden(nodo->hijoMenor); // Visita hijo menor (derecho)
+}
+
+// Función auxiliar para encontrar el nodo con el ID mínimo (más a la izquierda)
+Nodo* encontrarMinimo(Nodo* nodo) {
+    while (nodo && nodo->hijoMayor)
+        nodo = nodo->hijoMayor;
+    return nodo;
+}
+
+// Función para eliminar un miembro por su ID
+Nodo* eliminar(Nodo* raiz, string id) {
+    if (!raiz) return NULL; // Árbol vacío
+
+    // Buscar el nodo a eliminar
+    if (id < raiz->id)
+        raiz->hijoMayor = eliminar(raiz->hijoMayor, id);
+    else if (id > raiz->id)
+        raiz->hijoMenor = eliminar(raiz->hijoMenor, id);
+    else {
+        // Nodo encontrado
+        if (!raiz->hijoMayor && !raiz->hijoMenor) {
+            // Caso 1: Sin hijos
+            delete raiz;
+            return NULL;
+        }
+        else if (!raiz->hijoMayor) {
+            // Caso 2: Un solo hijo derecho
+            Nodo* temp = raiz->hijoMenor;
+            delete raiz;
+            return temp;
+        }
+        else if (!raiz->hijoMenor) {
+            // Caso 2: Un solo hijo izquierdo
+            Nodo* temp = raiz->hijoMayor;
+            delete raiz;
+            return temp;
+        }
+        // Caso 3: Dos hijos
+        Nodo* sucesor = encontrarMinimo(raiz->hijoMenor); // Nodo sucesor más pequeño del subárbol derecho
+        // Copiar los datos del sucesor al nodo actual
+        raiz->id = sucesor->id;
+        raiz->nombre = sucesor->nombre;
+        raiz->genero = sucesor->genero;
+        raiz->fechaNac = sucesor->fechaNac;
+        // Eliminar el sucesor en el subárbol derecho
+        raiz->hijoMenor = eliminar(raiz->hijoMenor, sucesor->id);
+    }
+
+    return raiz; // Retornar raíz actualizada
+}
+
+// Función que muestra el menú interactivo
+void menu() {
+    cout << "\n====== Árbol Genealógico de la Civilización ======\n";
+    cout << "1. Insertar miembro\n";
+    cout << "2. Buscar miembro por ID\n";
+    cout << "3. Eliminar miembro por ID\n";
+    cout << "4. Mostrar genealogía (Inorden)\n";
+    cout << "5. Salir\n";
+    cout << "===============================================\n";
+}
+
+// Función principal
+int main() {
+    Nodo* raiz = NULL; // Inicializa el árbol como vacío
+    int opcion;           // Opción del menú
+    string id, nombre, genero, fecha; // Datos del miembro
+
+    do {
+        menu(); // Muestra el menú
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+        cin.ignore(); // Limpiar buffer de entrada
+
+        switch (opcion) {
+        case 1: // Insertar miembro
+            cout << "ID: "; getline(cin, id);
+            cout << "Nombre: "; getline(cin, nombre);
+            cout << "Género: "; getline(cin, genero);
+            cout << "Fecha de nacimiento: "; getline(cin, fecha);
+            raiz = insertar(raiz, id, nombre, genero, fecha);
+            break;
+        case 2: // Buscar por ID
+            cout << "Ingrese ID a buscar: "; getline(cin, id);
+            {
+                Nodo* resultado = buscar(raiz, id);
+                if (resultado)
+                    cout << "Encontrado: " << resultado->nombre << " (" << resultado->genero << ", " << resultado->fechaNac << ")\n";
+                else
+                    cout << "No se encontró el miembro.\n";
+            }
+            break;
+        case 3: // Eliminar por ID
+            cout << "Ingrese ID a eliminar: "; getline(cin, id);
+            raiz = eliminar(raiz, id);
+            break;
+        case 4: // Mostrar árbol inorden
+            cout << "\nÁrbol Genealógico (Inorden):\n";
+            inorden(raiz);
+            break;
+        case 5: // Salida
+            cout << "Saliendo del programa...\n";
+            break;
+        default:
+            cout << "Opción inválida.\n";
+        }
+    } while (opcion != 5); // Repetir hasta que el usuario elija salir
+
+    return 0; // Fin del programa
+}
