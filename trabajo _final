@@ -1,84 +1,179 @@
 #include <iostream>
+#include <string>
 using namespace std;
 
-// Estructura de un nodo en el árbol binario
+// Definición de la estructura Nodo para representar a un miembro de la civilización
 struct Nodo {
-    int dato;
-    Nodo* izq;
-    Nodo* der;
+    string id;            // Identificador único del miembro (clave)
+    string nombre;        // Nombre del individuo
+    string genero;        // Género: Masculino, Femenino u Otro
+    string fechaNac;      // Fecha de nacimiento (dato opcional)
+    Nodo* hijoMayor;      // Puntero al hijo con ID menor (lado izquierdo del árbol)
+    Nodo* hijoMenor;      // Puntero al hijo con ID mayor (lado derecho del árbol)
 
-    // Constructor para inicializar un nodo
-    Nodo(int valor) {
-        dato = valor;
-        izq = NULL;
-        der = NULL;
-    }
+    // Constructor del nodo, inicializa los datos y punteros a NULL
+    Nodo(string _id, string _nombre, string _genero, string _fechaNac = "")
+        : id(_id), nombre(_nombre), genero(_genero), fechaNac(_fechaNac),
+          hijoMayor(NULL), hijoMenor(NULL) {}
 };
 
-// Función para insertar un valor en el árbol binario
-Nodo* insertar(Nodo* raiz, int valor) {
-    if (raiz == NULL)
-        return new Nodo(valor);
+// Función para insertar un nuevo miembro en el árbol genealógico
+Nodo* insertar(Nodo* raiz, string id, string nombre, string genero, string fechaNac = "") {
+    if (!raiz)
+        return new Nodo(id, nombre, genero, fechaNac);
 
-    if (valor < raiz->dato)
-        raiz->izq = insertar(raiz->izq, valor);
-    else if (valor > raiz->dato)
-        raiz->der = insertar(raiz->der, valor);
+    if (id < raiz->id)
+        raiz->hijoMayor = insertar(raiz->hijoMayor, id, nombre, genero, fechaNac);
+    else if (id > raiz->id)
+        raiz->hijoMenor = insertar(raiz->hijoMenor, id, nombre, genero, fechaNac);
     else
-        cout << "El valor ya existe y no se permiten duplicados.\n";
+        cout << "ID duplicado. No se permite insertar.\n";
 
     return raiz;
 }
 
-// Recorrido en Preorden
-void preorden(Nodo* nodo) {
-    if (nodo != NULL) {
-        cout << nodo->dato << " ";
-        preorden(nodo->izq);
-        preorden(nodo->der);
-    }
+// Función para buscar un miembro por su ID
+Nodo* buscar(Nodo* raiz, string id) {
+    if (!raiz || raiz->id == id)
+        return raiz;
+
+    if (id < raiz->id)
+        return buscar(raiz->hijoMayor, id);
+    else
+        return buscar(raiz->hijoMenor, id);
 }
 
-// Recorrido en Inorden
+// Recorrido Inorden: muestra los miembros ordenados por ID alfabéticamente
 void inorden(Nodo* nodo) {
-    if (nodo != NULL) {
-        inorden(nodo->izq);
-        cout << nodo->dato << " ";
-        inorden(nodo->der);
-    }
+    if (!nodo) return;
+    inorden(nodo->hijoMayor);
+    cout << "ID: " << nodo->id << ", Nombre: " << nodo->nombre << ", Género: " << nodo->genero << ", Fecha Nac: " << nodo->fechaNac << endl;
+    inorden(nodo->hijoMenor);
 }
 
-// Recorrido en Postorden
+// Recorrido Preorden: visita el nodo actual antes que sus hijos
+void preorden(Nodo* nodo) {
+    if (!nodo) return;
+    cout << "ID: " << nodo->id << ", Nombre: " << nodo->nombre << ", Género: " << nodo->genero << ", Fecha Nac: " << nodo->fechaNac << endl;
+    preorden(nodo->hijoMayor);
+    preorden(nodo->hijoMenor);
+}
+
+// Recorrido Postorden: visita el nodo actual después de sus hijos
 void postorden(Nodo* nodo) {
-    if (nodo != NULL) {
-        postorden(nodo->izq);
-        postorden(nodo->der);
-        cout << nodo->dato << " ";
+    if (!nodo) return;
+    postorden(nodo->hijoMayor);
+    postorden(nodo->hijoMenor);
+    cout << "ID: " << nodo->id << ", Nombre: " << nodo->nombre << ", Género: " << nodo->genero << ", Fecha Nac: " << nodo->fechaNac << endl;
+}
+
+// Función auxiliar para encontrar el nodo con el ID mínimo (más a la izquierda)
+Nodo* encontrarMinimo(Nodo* nodo) {
+    while (nodo && nodo->hijoMayor)
+        nodo = nodo->hijoMayor;
+    return nodo;
+}
+
+// Función para eliminar un miembro por su ID
+Nodo* eliminar(Nodo* raiz, string id) {
+    if (!raiz) return NULL;
+
+    if (id < raiz->id)
+        raiz->hijoMayor = eliminar(raiz->hijoMayor, id);
+    else if (id > raiz->id)
+        raiz->hijoMenor = eliminar(raiz->hijoMenor, id);
+    else {
+        if (!raiz->hijoMayor && !raiz->hijoMenor) {
+            delete raiz;
+            return NULL;
+        }
+        else if (!raiz->hijoMayor) {
+            Nodo* temp = raiz->hijoMenor;
+            delete raiz;
+            return temp;
+        }
+        else if (!raiz->hijoMenor) {
+            Nodo* temp = raiz->hijoMayor;
+            delete raiz;
+            return temp;
+        }
+        Nodo* sucesor = encontrarMinimo(raiz->hijoMenor);
+        raiz->id = sucesor->id;
+        raiz->nombre = sucesor->nombre;
+        raiz->genero = sucesor->genero;
+        raiz->fechaNac = sucesor->fechaNac;
+        raiz->hijoMenor = eliminar(raiz->hijoMenor, sucesor->id);
     }
+
+    return raiz;
+}
+
+// Función que muestra el menú interactivo
+void menu() {
+    cout << "\n====== Arbol Genealogico de la Civilizacion ======\n";
+    cout << "1. Insertar miembro\n";
+    cout << "2. Buscar miembro por ID\n";
+    cout << "3. Eliminar miembro por ID\n";
+    cout << "4. Mostrar genealogia (Inorden)\n";
+    cout << "5. Mostrar genealogia (Preorden)\n";
+    cout << "6. Mostrar genealogia (Postorden)\n";
+    cout << "7. Salir\n";
+    cout << "===============================================\n";
 }
 
 // Función principal
 int main() {
     Nodo* raiz = NULL;
-    int n, valor;
+    int opcion;
+    string id, nombre, genero, fecha;
 
-    cout << "¿Cuántos valores deseas insertar?: ";
-    cin >> n;
+    do {
+        menu();
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+        cin.ignore();
 
-    for (int i = 0; i < n; i++) {
-        cout << "Ingrese valor " << i + 1 << ": ";
-        cin >> valor;
-        raiz = insertar(raiz, valor);
-    }
-
-    cout << "\nRecorrido Preorden: ";
-    preorden(raiz);
-
-    cout << "\nRecorrido Inorden: ";
-    inorden(raiz);
-
-    cout << "\nRecorrido Postorden: ";
-    postorden(raiz);
+        switch (opcion) {
+        case 1:
+            cout << "ID: "; getline(cin, id);
+            cout << "Nombre: "; getline(cin, nombre);
+            cout << "Género: "; getline(cin, genero);
+            cout << "Fecha de nacimiento: "; getline(cin, fecha);
+            raiz = insertar(raiz, id, nombre, genero, fecha);
+            break;
+        case 2:
+            cout << "Ingrese ID a buscar: "; getline(cin, id);
+            {
+                Nodo* resultado = buscar(raiz, id);
+                if (resultado)
+                    cout << "Encontrado: " << resultado->nombre << " (" << resultado->genero << ", " << resultado->fechaNac << ")\n";
+                else
+                    cout << "No se encontró el miembro.\n";
+            }
+            break;
+        case 3:
+            cout << "Ingrese ID a eliminar: "; getline(cin, id);
+            raiz = eliminar(raiz, id);
+            break;
+        case 4:
+            cout << "\nÁrbol Genealógico (Inorden):\n";
+            inorden(raiz);
+            break;
+        case 5:
+            cout << "\nÁrbol Genealógico (Preorden):\n";
+            preorden(raiz);
+            break;
+        case 6:
+            cout << "\nÁrbol Genealógico (Postorden):\n";
+            postorden(raiz);
+            break;
+        case 7:
+            cout << "Saliendo del programa...\n";
+            break;
+        default:
+            cout << "Opción inválida.\n";
+        }
+    } while (opcion != 7);
 
     return 0;
 }
