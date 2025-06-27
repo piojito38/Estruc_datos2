@@ -1,1 +1,86 @@
+#include <iostream>
+using namespace std;
+
+// Estructura de un nodo en el árbol binario
+struct Nodo {
+    int dato;
+    Nodo* izq;
+    Nodo* der;
+
+    // Constructor para inicializar un nodo
+    Nodo(int valor) {
+        dato = valor;
+        izq = NULL;
+        der = NULL;
+    }
+};
+
+// Función para insertar un valor en el árbol binario
+Nodo* insertar(Nodo* raiz, int valor) {
+    if (raiz == NULL)
+        return new Nodo(valor);
+
+    if (valor < raiz->dato)
+        raiz->izq = insertar(raiz->izq, valor);
+    else if (valor > raiz->dato)
+        raiz->der = insertar(raiz->der, valor);
+    else
+        cout << "El valor ya existe y no se permiten duplicados.\n";
+
+    return raiz;
+}
+
+// Recorrido en Preorden
+void preorden(Nodo* nodo) {
+    if (nodo != NULL) {
+        cout << nodo->dato << " ";
+        preorden(nodo->izq);
+        preorden(nodo->der);
+    }
+}
+
+// Recorrido en Inorden
+void inorden(Nodo* nodo) {
+    if (nodo != NULL) {
+        inorden(nodo->izq);
+        cout << nodo->dato << " ";
+        inorden(nodo->der);
+    }
+}
+
+// Recorrido en Postorden
+void postorden(Nodo* nodo) {
+    if (nodo != NULL) {
+        postorden(nodo->izq);
+        postorden(nodo->der);
+        cout << nodo->dato << " ";
+    }
+}
+
+// Función principal
+int main() {
+    Nodo* raiz = NULL;
+    int n, valor;
+
+    cout << "¿Cuántos valores deseas insertar?: ";
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        cout << "Ingrese valor " << i + 1 << ": ";
+        cin >> valor;
+        raiz = insertar(raiz, valor);
+    }
+
+    cout << "\nRecorrido Preorden: ";
+    preorden(raiz);
+
+    cout << "\nRecorrido Inorden: ";
+    inorden(raiz);
+
+    cout << "\nRecorrido Postorden: ";
+    postorden(raiz);
+
+    return 0;
+}
+
 
